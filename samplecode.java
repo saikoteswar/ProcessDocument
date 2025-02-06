@@ -1,3 +1,18 @@
+<w:hyperlink r:id="rId1" w:history="1">
+						<w:r w:rsidR="004522BB" w:rsidRPr="002606AA">
+							<w:rPr>
+								<w:rStyle w:val="Hyperlink"/>
+								<w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/>
+								<w:b/>
+								<w:sz w:val="16"/>
+								<w:szCs w:val="16"/>
+							</w:rPr>
+							<w:t>www.bluecrossma.com</w:t>
+						</w:r>
+					</w:hyperlink>
+-----------------
+
+
 import org.apache.poi.xwpf.usermodel.*;
 
 import java.io.FileInputStream;
