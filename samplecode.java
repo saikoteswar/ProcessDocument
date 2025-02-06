@@ -1,3 +1,64 @@
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.List;
+
+public class RemoveHyperlinks {
+
+    public static void main(String[] args) {
+        String inputDocxPath = "path/to/input.docx";
+        String outputDocxPath = "path/to/output.docx";
+
+        try (FileInputStream fis = new FileInputStream(inputDocxPath);
+             XWPFDocument document = new XWPFDocument(fis)) {
+
+            removeHyperlinks(document);
+
+            try (FileOutputStream fos = new FileOutputStream(outputDocxPath)) {
+                document.write(fos);
+            }
+
+            System.out.println("Hyperlinks removed and saved to: " + outputDocxPath);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void removeHyperlinks(XWPFDocument document) {
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            List<XWPFRun> runs = paragraph.getRuns();
+            if (runs == null) continue;
+
+            for (int i = 0; i < runs.size(); i++) {
+                XWPFRun run = runs.get(i);
+                if (run instanceof XWPFHyperlinkRun hyperlinkRun) {
+                    String text = hyperlinkRun.text();  // Extract hyperlink text
+                    XWPFRun newRun = paragraph.insertNewRun(i);  // Replace with a regular run
+                    newRun.setText(text);
+
+                    copyRunStyle(hyperlinkRun, newRun);
+                    paragraph.removeRun(i + 1);  // Remove old hyperlink run
+                }
+            }
+        }
+    }
+
+    private static void copyRunStyle(XWPFRun source, XWPFRun target) {
+        target.setBold(source.isBold());
+        target.setItalic(source.isItalic());
+        target.setUnderline(source.getUnderline());
+        target.setFontSize(source.getFontSize());
+        target.setFontFamily(source.getFontFamily());
+        target.setColor(source.getColor());
+    }
+}
+
+
+--------
+
 
 import com.itextpdf.io.image.ImageData;
 import com.itextpdf.io.image.ImageDataFactory;
@@ -281,5 +342,6 @@ public class DocxToPdfWithImages {
         }
     }
 }
-
+----------
+	
     
