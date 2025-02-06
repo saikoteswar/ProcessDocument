@@ -49,3 +49,69 @@ public class DocxToPdfWithImages {
         }
     }
 }
+
+
+
+
+<dependency>
+    <groupId>fr.opensagres.xdocreport</groupId>
+    <artifactId>xdocreport-document-injector</artifactId>
+    <version>2.0.2</version>
+</dependency>
+
+<dependency>
+    <groupId>fr.opensagres.xdocreport</groupId>
+    <artifactId>fr.opensagres.xdocreport.converter.docx.xwpf</artifactId>
+    <version>2.0.2</version>
+</dependency>
+
+<dependency>
+    <groupId>fr.opensagres.xdocreport</groupId>
+    <artifactId>fr.opensagres.xdocreport.converter.pdf.itext</artifactId>
+    <version>2.0.2</version>
+</dependency>
+
+
+
+import fr.opensagres.xdocreport.converter.ConverterTypeTo;
+import fr.opensagres.xdocreport.converter.Options;
+import fr.opensagres.xdocreport.converter.XDocConverterException;
+import fr.opensagres.xdocreport.converter.pdf.PDFViaITextOptions;
+import fr.opensagres.xdocreport.core.document.DocumentKind;
+import fr.opensagres.xdocreport.document.IConverter;
+import fr.opensagres.xdocreport.document.IWContext;
+import fr.opensagres.xdocreport.document.registry.DocumentKindRegistry;
+import fr.opensagres.xdocreport.template.TemplateEngineKind;
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.*;
+
+public class DocxToPdfConverterXDocReport {
+
+    public static void main(String[] args) {
+        String docxPath = "path/to/your/input.docx";
+        String pdfPath = "path/to/your/output.pdf";
+
+        try (InputStream docxInputStream = new FileInputStream(docxPath);
+             OutputStream pdfOutputStream = new FileOutputStream(pdfPath)) {
+
+            // Create XWPFDocument instance
+            XWPFDocument document = new XWPFDocument(docxInputStream);
+
+            // Prepare XDocReport Converter options
+            Options options = Options.getFrom(DocumentKind.DOCX)
+                                      .to(ConverterTypeTo.PDF)
+                                      .via(PDFViaITextOptions.create().compress());
+
+            IConverter converter = DocumentKindRegistry.getRegistry().getConverter(options);
+
+            // Perform the conversion
+            converter.convert(document, pdfOutputStream, IWContext.create());
+            System.out.println("Conversion to PDF completed.");
+
+        } catch (IOException | XDocConverterException e) {
+            e.printStackTrace();
+        }
+    }
+}
+    
