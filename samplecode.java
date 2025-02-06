@@ -197,6 +197,89 @@ public class DocxToPdfConverter {
             }
         }
     }
+
+}
+------------
+
+
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+public class DocxToPdfWithImages {
+
+    public static void main(String[] args) {
+        String inputDocxPath = "path/to/input.docx";
+        String outputPdfPath = "path/to/output.pdf";
+
+        try (FileInputStream inputStream = new FileInputStream(inputDocxPath);
+             FileOutputStream pdfOutputStream = new FileOutputStream(outputPdfPath)) {
+
+            // Load the document
+            XWPFDocument document = new XWPFDocument(inputStream);
+
+            // Extract images and store with their paragraph indices
+            Map<Integer, byte[]> imageMap = extractImages(document);
+
+            // Reinsert the images into the correct places
+            reinsertImages(document, imageMap);
+
+            // Convert the modified document to PDF
+            PdfOptions options = PdfOptions.create();
+            PdfConverter.getInstance().convert(document, pdfOutputStream, options);
+
+            System.out.println("DOCX successfully converted to PDF with images.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Map<Integer, byte[]> extractImages(XWPFDocument document) {
+        Map<Integer, byte[]> imageMap = new HashMap<>();
+        int pictureIndex = 0;
+
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            List<XWPFRun> runs = paragraph.getRuns();
+            if (runs != null) {
+                for (XWPFRun run : runs) {
+                    List<XWPFPicture> pictures = run.getEmbeddedPictures();
+                    for (XWPFPicture picture : pictures) {
+                        XWPFPictureData pictureData = picture.getPictureData();
+                        imageMap.put(pictureIndex++, pictureData.getData());
+                        System.out.println("Extracted image at index: " + pictureIndex);
+                    }
+                }
+            }
+        }
+        return imageMap;
+    }
+
+    private static void reinsertImages(XWPFDocument document, Map<Integer, byte[]> imageMap) {
+        int imageIndex = 0;
+
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            List<XWPFRun> runs = paragraph.getRuns();
+            if (runs != null && !imageMap.isEmpty() && imageIndex < imageMap.size()) {
+                for (XWPFRun run : runs) {
+                    try {
+                        byte[] imageData = imageMap.get(imageIndex++);
+                        if (imageData != null) {
+                            run.addPicture(new ByteArrayInputStream(imageData),
+                                    XWPFDocument.PICTURE_TYPE_PNG, "image" + imageIndex + ".png",
+                                    200, 150); // Width and height adjustments
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
 }
 
     
