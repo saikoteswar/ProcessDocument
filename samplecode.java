@@ -3,6 +3,95 @@ import org.docx4j.wml.*;
 
 import javax.xml.bind.JAXBElement;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class RemoveHyperlinksDocx4jJava11 {
+
+    public static void main(String[] args) {
+        String inputPath = "path/to/input.docx";
+        String outputPath = "path/to/output.docx";
+
+        try {
+            // Load the Word document
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File(inputPath));
+
+            // Process all paragraphs and remove hyperlinks
+            removeHyperlinks(wordMLPackage);
+
+            // Save the updated document
+            wordMLPackage.save(new File(outputPath));
+
+            System.out.println("Hyperlinks removed successfully and saved to: " + outputPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void removeHyperlinks(WordprocessingMLPackage wordMLPackage) {
+        List<Object> paragraphs = wordMLPackage.getMainDocumentPart().getContent();
+
+        for (Object obj : paragraphs) {
+            if (obj instanceof JAXBElement) {
+                JAXBElement<?> element = (JAXBElement<?>) obj;
+                Object value = element.getValue();
+
+                if (value instanceof P) {
+                    P paragraph = (P) value;
+                    removeHyperlinksFromParagraph(paragraph);
+                }
+            }
+        }
+    }
+
+    private static void removeHyperlinksFromParagraph(P paragraph) {
+        List<Object> children = new ArrayList<>(paragraph.getContent());
+        List<Object> updatedContent = new ArrayList<>();
+
+        for (Object child : children) {
+            updatedContent.add(processHyperlink(child));
+        }
+
+        paragraph.getContent().clear();
+        paragraph.getContent().addAll(updatedContent);
+    }
+
+    private static Object processHyperlink(Object obj) {
+        if (obj instanceof JAXBElement) {
+            JAXBElement<?> element = (JAXBElement<?>) obj;
+            Object value = element.getValue();
+
+            if (value instanceof P.Hyperlink) {
+                return extractTextRuns(((P.Hyperlink) value).getContent());
+            }
+        }
+        return obj;
+    }
+
+    private static R extractTextRuns(List<Object> content) {
+        ObjectFactory factory = new ObjectFactory();
+        R combinedRun = factory.createR();
+
+        for (Object child : content) {
+            if (child instanceof JAXBElement) {
+                JAXBElement<?> element = (JAXBElement<?>) child;
+                if (element.getValue() instanceof R) {
+                    R run = (R) element.getValue();
+                    combinedRun.getContent().addAll(run.getContent());
+                    combinedRun.setRPr(run.getRPr());
+                }
+            }
+        }
+        return combinedRun;
+    }
+}
+
+-----------
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.wml.*;
+
+import javax.xml.bind.JAXBElement;
+import java.io.File;
 import java.util.List;
 import java.util.stream.Collectors;
 
