@@ -142,4 +142,61 @@ public class DocxToPdfConverterXDocReport {
                     System.out.println("Extracting image with width: " + width + " and height: " + height);
                 }
             });
+
+------------
+
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.*;
+import java.util.List;
+
+public class DocxToPdfConverter {
+
+    public static void main(String[] args) {
+        String docxPath = "path/to/your/input.docx";
+        String pdfPath = "path/to/your/output.pdf";
+
+        try (FileInputStream docxInputStream = new FileInputStream(docxPath);
+             FileOutputStream pdfOutputStream = new FileOutputStream(pdfPath)) {
+
+            // Load the DOCX file with POI
+            XWPFDocument document = new XWPFDocument(docxInputStream);
+
+            // Ensure proper handling of complex images
+            extractImages(document);
+
+            // Set up PDF conversion options
+            PdfOptions options = PdfOptions.create();
+
+            // Perform the conversion
+            PdfConverter.getInstance().convert(document, pdfOutputStream, options);
+
+            System.out.println("DOCX file successfully converted to PDF.");
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void extractImages(XWPFDocument document) {
+        List<XWPFPictureData> pictures = document.getAllPictures();
+        if (pictures.isEmpty()) {
+            System.out.println("No embedded images found in the DOCX.");
+        } else {
+            System.out.println("Found " + pictures.size() + " images:");
+            for (XWPFPictureData pictureData : pictures) {
+                String imageType = pictureData.suggestFileExtension();
+                System.out.println("Image Type: " + imageType);
+                try (FileOutputStream imageOut = new FileOutputStream("output_image_" + pictureData.getPackagePart().getPartName().getName())) {
+                    imageOut.write(pictureData.getData());
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+
     
