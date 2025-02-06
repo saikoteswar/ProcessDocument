@@ -5,6 +5,75 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+public class RemoveHyperlinksJava11 {
+
+    public static void main(String[] args) {
+        String inputDocxPath = "path/to/input.docx";
+        String outputDocxPath = "path/to/output.docx";
+
+        try (FileInputStream fis = new FileInputStream(inputDocxPath);
+             XWPFDocument document = new XWPFDocument(fis)) {
+
+            removeHyperlinks(document);
+
+            try (FileOutputStream fos = new FileOutputStream(outputDocxPath)) {
+                document.write(fos);
+            }
+
+            System.out.println("Hyperlinks removed and saved to: " + outputDocxPath);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void removeHyperlinks(XWPFDocument document) {
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            List<XWPFRun> runs = paragraph.getRuns();
+            if (runs == null) continue;
+
+            for (int i = 0; i < runs.size(); i++) {
+                XWPFRun run = runs.get(i);
+                // Check if it's a hyperlink run using casting instead of instanceof patterns
+                if (run != null && run.getClass().equals(XWPFHyperlinkRun.class)) {
+                    XWPFHyperlinkRun hyperlinkRun = (XWPFHyperlinkRun) run;
+
+                    // Extract hyperlink text
+                    String text = hyperlinkRun.text();
+
+                    // Replace with a regular run
+                    XWPFRun newRun = paragraph.insertNewRun(i);
+                    newRun.setText(text);
+
+                    // Copy styles to the new run
+                    copyRunStyle(hyperlinkRun, newRun);
+
+                    // Remove old hyperlink run
+                    paragraph.removeRun(i + 1);
+                }
+            }
+        }
+    }
+
+    private static void copyRunStyle(XWPFRun source, XWPFRun target) {
+        target.setBold(source.isBold());
+        target.setItalic(source.isItalic());
+        target.setUnderline(source.getUnderline());
+        target.setFontSize(source.getFontSize());
+        target.setFontFamily(source.getFontFamily());
+        target.setColor(source.getColor());
+    }
+}
+
+------------
+
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.List;
+
 public class RemoveHyperlinks {
 
     public static void main(String[] args) {
