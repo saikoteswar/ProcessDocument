@@ -132,4 +132,14 @@ public class DocxToPdfConverterXDocReport {
 			<artifactId>fr.opensagres.poi.xwpf.converter.pdf</artifactId>
 			<version>2.0.2</version>
 		</dependency>
+
+	----------
+
+	// Handle image extraction in complex documents
+            options.setExtractor(new PdfImageExtractor() {
+                @Override
+                public void extractImage(byte[] imageData, int imageType, float width, float height) {
+                    System.out.println("Extracting image with width: " + width + " and height: " + height);
+                }
+            });
     
