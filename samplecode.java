@@ -1,4 +1,105 @@
- if (runs != null) {
+import com.lowagie.text.Document;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfWriter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.util.List;
+
+public class TestPOI {
+
+    public static void main(String[] args) throws Exception {
+        String docName = "NewFax UCSBA-Updated CSB Attorney.docx";
+        String docxPath = "C:/Sai/BCBSm/XMLTemplatesBCBS/Feb9/" + docName;
+        String pdfPath = "C:/Sai/BCBSm/BCBSTemplatesOutputJan8/output" + docName + System.currentTimeMillis() + ".pdf";
+
+        // Load the document
+        FileInputStream fileInputStream = new FileInputStream(docxPath);
+        XWPFDocument document = new XWPFDocument(fileInputStream);
+
+        // Handle hyperlinks in footers
+        cleanHyperlinksInFooters(document);
+
+        // Configure PDF options
+        PdfOptions options = PdfOptions.create();
+        options.setConfiguration(pdfWriter -> {
+            pdfWriter.setViewerPreferences(PdfWriter.PageModeUseOutlines);
+            pdfWriter.setCompressionLevel(9);
+            pdfWriter.setFullCompression();
+            pdfWriter.setPageEvent(new PdfPageEventHelper() {
+                @Override
+                public void onEndPage(PdfWriter writer, Document document) {
+                    writer.getDirectContent().setLiteral("\n");
+                }
+            });
+        });
+
+        // Convert the document to PDF
+        PdfConverter.getInstance().convert(document, new FileOutputStream(pdfPath), options);
+        System.out.println("Document converted successfully: " + pdfPath);
+    }
+
+    /**
+     * Cleans hyperlinks from footers while retaining text and formatting.
+     */
+    private static void cleanHyperlinksInFooters(XWPFDocument document) {
+        List<XWPFFooter> footers = document.getFooterList();
+
+        for (XWPFFooter footer : footers) {
+            for (XWPFParagraph paragraph : footer.getParagraphs()) {
+                cleanHyperlinksFromParagraph(paragraph);
+            }
+        }
+    }
+
+    /**
+     * Removes hyperlink runs from a paragraph and retains text and formatting.
+     */
+    private static void cleanHyperlinksFromParagraph(XWPFParagraph paragraph) {
+        List<XWPFRun> runs = paragraph.getRuns();
+
+        if (runs != null) {
+            StringBuilder textBuffer = new StringBuilder();
+            for (XWPFRun run : runs) {
+                textBuffer.append(run.text());
+            }
+
+            // Clear the paragraph and reinsert text without hyperlinks
+            paragraph.getRuns().clear();
+
+            if (textBuffer.length() > 0) {
+                XWPFRun newRun = paragraph.createRun();
+                newRun.setText(textBuffer.toString());
+
+                // Optionally copy formatting properties (can be customized)
+                if (!runs.isEmpty()) {
+                    copyFormatting(runs.get(0), newRun);
+                }
+            }
+        }
+    }
+
+    /**
+     * Copies formatting properties from one run to another.
+     */
+    private static void copyFormatting(XWPFRun sourceRun, XWPFRun targetRun) {
+        if (sourceRun.getFontSize() != -1) {
+            targetRun.setFontSize(sourceRun.getFontSize());
+        }
+        if (sourceRun.getFontFamily() != null) {
+            targetRun.setFontFamily(sourceRun.getFontFamily());
+        }
+        targetRun.setBold(sourceRun.isBold());
+        targetRun.setItalic(sourceRun.isItalic());
+    }
+}
+
+
+______
+if (runs != null) {
             StringBuilder textBuffer = new StringBuilder();
             for (XWPFRun run : runs) {
                 textBuffer.append(run.text());
