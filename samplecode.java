@@ -1,5 +1,126 @@
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
+import org.docx4j.relationships.Relationship;
+import org.docx4j.wml.*;
+
+import javax.xml.bind.JAXBElement;
+import java.io.File;
+import java.util.List;
+
+public class RemoveHyperlinksWithFooterCheck {
+
+    public static void main(String[] args) {
+        String inputPath = "path/to/input.docx";
+        String outputPath = "path/to/output.docx";
+
+        try {
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File(inputPath));
+
+            // Ensure document has footers, and remove hyperlinks
+            ensureFooterExistsAndRemoveHyperlinks(wordMLPackage);
+
+            // Save the updated document
+            wordMLPackage.save(new File(outputPath));
+
+            System.out.println("Hyperlinks removed successfully and saved to: " + outputPath);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void ensureFooterExistsAndRemoveHyperlinks(WordprocessingMLPackage wordMLPackage) throws Docx4JException {
+        List<SectionWrapper> sections = wordMLPackage.getDocumentModel().getSections();
+
+        for (SectionWrapper sectionWrapper : sections) {
+            FooterPart footerPart = sectionWrapper.getFooter();
+
+            if (footerPart == null) {
+                // Create a new footer if one doesn't exist
+                footerPart = new FooterPart();
+                footerPart.setPackage(wordMLPackage);
+                wordMLPackage.getMainDocumentPart()
+                             .addTargetPart(footerPart);
+
+                Footer footer = new ObjectFactory().createFooter();
+                P paragraph = new ObjectFactory().createP();
+                footer.getContent().add(paragraph);
+                footerPart.setJaxbElement(footer);
+
+                sectionWrapper.getSectPr()
+                              .getEGHdrFtrReferences()
+                              .add(footerPart.getRelLast().getReference());
+            }
+
+            removeHyperlinksFromFooterContent(footerPart.getContent());
+        }
+    }
+
+    private static void removeHyperlinksFromFooterContent(List<Object> footerContent) {
+        for (Object obj : footerContent) {
+            if (obj instanceof JAXBElement) {
+                JAXBElement<?> element = (JAXBElement<?>) obj;
+                Object value = element.getValue();
+
+                if (value instanceof P) {
+                    removeHyperlinksFromParagraph((P) value);
+                }
+            }
+        }
+    }
+
+    private static void removeHyperlinksFromParagraph(P paragraph) {
+        List<Object> children = paragraph.getContent();
+
+        for (int i = 0; i < children.size(); i++) {
+            Object child = children.get(i);
+            if (child instanceof JAXBElement) {
+                JAXBElement<?> element = (JAXBElement<?>) child;
+                Object value = element.getValue();
+
+                if (value instanceof P.Hyperlink) {
+                    P.Hyperlink hyperlink = (P.Hyperlink) value;
+
+                    // Extract and replace hyperlink text
+                    R formattedTextRun = extractTextWithFormatting(hyperlink.getContent());
+                    paragraph.getContent().set(i, formattedTextRun);
+                }
+            }
+        }
+    }
+
+    private static R extractTextWithFormatting(List<Object> content) {
+        ObjectFactory factory = new ObjectFactory();
+        R newRun = factory.createR();
+
+        for (Object child : content) {
+            if (child instanceof JAXBElement) {
+                JAXBElement<?> element = (JAXBElement<?>) child;
+                if (element.getValue() instanceof R) {
+                    R originalRun = (R) element.getValue();
+
+                    // Copy run properties (font, size, bold, etc.)
+                    if (originalRun.getRPr() != null) {
+                        newRun.setRPr(originalRun.getRPr());
+                    }
+
+                    for (Object runContent : originalRun.getContent()) {
+                        if (runContent instanceof Text) {
+                            Text textElement = factory.createText();
+                            textElement.setValue(((Text) runContent).getValue());
+                            newRun.getContent().add(textElement);
+                        }
+                    }
+                }
+            }
+        }
+        return newRun;
+    }
+}
+
+-------------------
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.PartName;
 import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
 import org.docx4j.relationships.Relationship;
