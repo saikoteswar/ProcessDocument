@@ -1,3 +1,107 @@
+import com.lowagie.text.BadElementException;
+import com.lowagie.text.Document;
+import com.lowagie.text.Image;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfWriter;
+import fr.opensagres.poi.xwpf.converter.core.XWPFConverterException;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
+import org.apache.poi.util.Units;
+import org.apache.poi.xwpf.usermodel.*;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+
+import java.io.*;
+import java.util.List;
+
+
+
+public class TestPOI {
+
+    public static void main(String[] args) throws XWPFConverterException, FileNotFoundException, IOException, Docx4JException, InvalidFormatException, BadElementException, BadElementException, InvalidFormatException, BadElementException, InvalidFormatException {
+        String docName = "NewFax UCSBA-Updated CSB Attorney.docx";
+        String docxPath = "C:/Sai/BCBSm/XMLTemplatesBCBS/Feb9/"+docName;
+        String pdfPath = "C:/Sai/BCBSm/BCBSTemplatesOutputJan8/output"+docName + String.valueOf(System.currentTimeMillis()) + ".pdf";
+
+        WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new FileInputStream(docxPath));
+
+        File tempFile = File.createTempFile("wordMLPackage", ".docx");
+        tempFile.deleteOnExit();
+        wordMLPackage.save(tempFile);
+
+        FileInputStream fileInputStream = new FileInputStream(tempFile);
+
+        XWPFDocument document=new XWPFDocument(fileInputStream);
+
+        document.removeBodyElement(0);
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+//            paragraph.setFirstLineIndent(-500);
+//            paragraph.setSpacingAfter(0); // Remove space after paragraph
+//            paragraph.setSpacingBefore(-200); // Remove space before paragraph
+//            paragraph.setBorderTop(Borders.ZIG_ZAG_STITCH);
+            paragraph.setSpacingBetween(1.0); // Set line spacing to single
+//        	paragraph.setSpacingAfterLines(500); // Remove space after paragraph
+//			paragraph.setSpacingAfter(-40); // Remove space after paragraph
+//			paragraph.setSpacingBefore(-10); // Remove space before paragraph
+//            paragraph.setSpacingLineRule(LineSpacingRule.AUTO); // Set line spacing rule to auto
+        }
+
+        PdfOptions options = PdfOptions.create();
+        // Set options to retain page layoutl
+        options.setConfiguration(pdfWriter -> {
+            pdfWriter.setViewerPreferences(PdfWriter.PageModeUseOutlines);
+            pdfWriter.setCompressionLevel(9);
+            pdfWriter.setFullCompression();
+            pdfWriter.setPageEvent(new PdfPageEventHelper() {
+                @Override
+                public void onEndPage(PdfWriter writer, Document document) {
+                    // Ensure content stays on the same page
+                    writer.getDirectContent().setLiteral("\n");
+                }
+            });
+        });
+/*
+
+        List<XWPFPictureData> pictures = document.getAllPictures();
+        for (XWPFPictureData picture : pictures) {
+            byte[] bytes = picture.getData();
+            Image img = Image.getInstance(bytes);
+            img.setAlignment(Image.ALIGN_RIGHT); // Set alignment to center
+            img.setAbsolutePosition(100, 500); // Set the position of the image (adjust as needed)
+            document.addPictureData(bytes, XWPFDocument.PICTURE_TYPE_PNG);
+        }
+*/
+
+
+/*
+
+
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            List<XWPFRun> runs = paragraph.getRuns();
+            if (runs != null) {
+                for (XWPFRun run : runs) {
+                    List<XWPFPicture> pictures = run.getEmbeddedPictures();
+                    for (XWPFPicture picture : pictures) {
+                        XWPFPictureData pictureData = picture.getPictureData();
+                        byte[] bytes = pictureData.getData();
+                        int pictureType = pictureData.getPictureType();
+                        String filename = pictureData.getFileName();
+                        run.addPicture(new ByteArrayInputStream(bytes), pictureType, filename, Units.toEMU(100), Units.toEMU(100)); // Adjust width and height as needed
+                    }
+                }
+            }
+        }
+
+*/
+
+        PdfConverter.getInstance().convert(document, new FileOutputStream(pdfPath) , options);
+        System.out.println("Document converted succesfully " + pdfPath);
+    }
+}
+
+
+----------------------------
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
