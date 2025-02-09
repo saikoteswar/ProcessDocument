@@ -1,4 +1,18 @@
- if (runs != null) {
+/**
+     * Copies formatting properties from one run to another.
+     */
+    private static void copyFormatting(XWPFRun sourceRun, XWPFRun targetRun) {
+        if (sourceRun.getFontSize() != -1) {
+            targetRun.setFontSize(sourceRun.getFontSize());
+        }
+        if (sourceRun.getFontFamily() != null) {
+            targetRun.setFontFamily(sourceRun.getFontFamily());
+        }
+        targetRun.setBold(sourceRun.isBold());
+        targetRun.setItalic(sourceRun.isItalic());
+    }
+___________
+if (runs != null) {
                     for (int i = 0; i < runs.size(); i++) {
                         XWPFRun run = runs.get(i);
                         // Check if the run is inside a hyperlink element
