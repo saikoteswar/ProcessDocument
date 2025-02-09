@@ -1,3 +1,22 @@
+ if (runs != null) {
+            StringBuilder textBuffer = new StringBuilder();
+            for (XWPFRun run : runs) {
+                textBuffer.append(run.text());
+            }
+
+            // Clear the paragraph and reinsert text without hyperlinks
+            paragraph.getRuns().clear();
+
+            if (textBuffer.length() > 0) {
+                XWPFRun newRun = paragraph.createRun();
+                newRun.setText(textBuffer.toString());
+
+                // Optionally copy formatting properties (can be customized)
+                if (!runs.isEmpty()) {
+                    copyFormatting(runs.get(0), newRun);
+                }
+            }
+__________
 /**
      * Copies formatting properties from one run to another.
      */
