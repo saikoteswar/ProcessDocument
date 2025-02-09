@@ -1,3 +1,23 @@
+ if (runs != null) {
+                    for (int i = 0; i < runs.size(); i++) {
+                        XWPFRun run = runs.get(i);
+                        // Check if the run is inside a hyperlink element
+                        if (run.getParent() instanceof XWPFHyperlinkRun) {
+                            XWPFHyperlinkRun hyperlinkRun = (XWPFHyperlinkRun) run;
+
+                            // Extract text and remove hyperlink
+                            String text = hyperlinkRun.text();
+                            XWPFRun newRun = paragraph.insertNewRun(i);
+                            newRun.setText(text);
+
+                            // Retain formatting properties
+                            copyFormatting(run, newRun);
+
+                            paragraph.removeRun(i + 1); // Remove the original hyperlink run
+                        }
+                    }
+                }
+------__
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
 import com.lowagie.text.pdf.PdfPageEventHelper;
