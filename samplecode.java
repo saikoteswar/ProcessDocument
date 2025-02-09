@@ -1,5 +1,88 @@
 import com.lowagie.text.BadElementException;
 import com.lowagie.text.Document;
+import com.lowagie.text.pdf.PdfPageEventHelper;
+import com.lowagie.text.pdf.PdfWriter;
+import fr.opensagres.poi.xwpf.converter.core.XWPFConverterException;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfConverter;
+import fr.opensagres.poi.xwpf.converter.pdf.PdfOptions;
+import org.apache.poi.xwpf.usermodel.*;
+
+import java.io.*;
+import java.util.List;
+
+public class TestPOI {
+
+    public static void main(String[] args) throws Exception {
+        String docName = "NewFax UCSBA-Updated CSB Attorney.docx";
+        String docxPath = "C:/Sai/BCBSm/XMLTemplatesBCBS/Feb9/" + docName;
+        String pdfPath = "C:/Sai/BCBSm/BCBSTemplatesOutputJan8/output" + docName + System.currentTimeMillis() + ".pdf";
+
+        // Load the document
+        FileInputStream fileInputStream = new FileInputStream(docxPath);
+        XWPFDocument document = new XWPFDocument(fileInputStream);
+
+        // Handle hyperlinks in footers
+        removeHyperlinksInFooter(document);
+
+        // Adjust paragraph formatting if needed
+        for (XWPFParagraph paragraph : document.getParagraphs()) {
+            paragraph.setSpacingBetween(1.0); // Set single line spacing
+        }
+
+        // Configure PDF options
+        PdfOptions options = PdfOptions.create();
+        options.setConfiguration(pdfWriter -> {
+            pdfWriter.setViewerPreferences(PdfWriter.PageModeUseOutlines);
+            pdfWriter.setCompressionLevel(9);
+            pdfWriter.setFullCompression();
+            pdfWriter.setPageEvent(new PdfPageEventHelper() {
+                @Override
+                public void onEndPage(PdfWriter writer, Document document) {
+                    writer.getDirectContent().setLiteral("\n");
+                }
+            });
+        });
+
+        // Convert the document to PDF
+        PdfConverter.getInstance().convert(document, new FileOutputStream(pdfPath), options);
+        System.out.println("Document converted successfully: " + pdfPath);
+    }
+
+    /**
+     * Removes hyperlinks from footers while retaining their text and formatting.
+     */
+    private static void removeHyperlinksInFooter(XWPFDocument document) {
+        List<XWPFFooter> footers = document.getFooterList();
+        for (XWPFFooter footer : footers) {
+            for (XWPFParagraph paragraph : footer.getParagraphs()) {
+                List<XWPFRun> runs = paragraph.getRuns();
+                if (runs != null) {
+                    for (int i = 0; i < runs.size(); i++) {
+                        XWPFRun run = runs.get(i);
+                        if (run.getCTR().getHyperlinkId() != null) {
+                            // Remove the hyperlink by copying text to a new run
+                            String text = run.text();
+                            XWPFRun newRun = paragraph.insertNewRun(i);
+                            newRun.setText(text);
+
+                            // Copy formatting from the original run
+                            if (run.getFontSize() != -1) newRun.setFontSize(run.getFontSize());
+                            if (run.getFontFamily() != null) newRun.setFontFamily(run.getFontFamily());
+                            newRun.setBold(run.isBold());
+                            newRun.setItalic(run.isItalic());
+
+                            paragraph.removeRun(i + 1); // Remove the original hyperlink run
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+------------------
+import com.lowagie.text.BadElementException;
+import com.lowagie.text.Document;
 import com.lowagie.text.Image;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
