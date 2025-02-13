@@ -1,3 +1,59 @@
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.wml.P;
+import java.io.File;
+import java.util.List;
+
+public class RemoveEmptyParagraph {
+    
+    public static void main(String[] args) {
+        String inputFilePath = "input.docx";
+        String outputFilePath = "output.docx";
+        String searchText = "Find this text";  // Text to search for
+        
+        try {
+            // Load the .docx file
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File(inputFilePath));
+            List<Object> paragraphs = wordMLPackage.getMainDocumentPart().getContent();
+
+            // Find the index of the paragraph containing the search text
+            int foundIndex = -1;
+            for (int i = 0; i < paragraphs.size(); i++) {
+                Object obj = paragraphs.get(i);
+                if (obj instanceof P) {
+                    P paragraph = (P) obj;
+                    String paraText = paragraph.toString();
+
+                    if (paraText.contains(searchText)) {
+                        foundIndex = i;
+                        break;  // Stop after finding the first occurrence
+                    }
+                }
+            }
+
+            // If found, check the next paragraph and remove it if empty
+            if (foundIndex != -1 && foundIndex + 1 < paragraphs.size()) {
+                Object nextObj = paragraphs.get(foundIndex + 1);
+                if (nextObj instanceof P) {
+                    P nextPara = (P) nextObj;
+                    if (nextPara.toString().trim().isEmpty()) {
+                        paragraphs.remove(foundIndex + 1);
+                        System.out.println("Empty paragraph removed.");
+                    }
+                }
+            }
+
+            // Save the modified document
+            wordMLPackage.save(new File(outputFilePath));
+            System.out.println("Updated document saved as: " + outputFilePath);
+
+        } catch (Docx4JException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+--------------
 import com.lowagie.text.Document;
 import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
