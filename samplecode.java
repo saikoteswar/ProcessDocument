@@ -1,3 +1,80 @@
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.*;
+
+public class FileChecker {
+    public static void main(String[] args) {
+        String excelFilePath = "C:\\path\\to\\your\\file.xlsx"; // Update with your Excel file path
+        String folderPath = "C:\\path\\to\\your\\folder"; // Update with your folder path
+        int columnIndex = 0; // Update with the correct column index (0-based index)
+
+        try {
+            // Read file names from Excel (removing extra spaces)
+            Set<String> excelFileNames = readExcelFileNames(excelFilePath, columnIndex);
+
+            // Read file names from local folder
+            Set<String> folderFileNames = readLocalFolderFiles(folderPath);
+
+            // Find files that are in the folder but not in the Excel
+            folderFileNames.removeAll(excelFileNames);
+
+            // Print missing files
+            if (folderFileNames.isEmpty()) {
+                System.out.println("All files in the folder are listed in the Excel file.");
+            } else {
+                System.out.println("Files in the folder but not in Excel:");
+                for (String file : folderFileNames) {
+                    System.out.println(file);
+                }
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading files: " + e.getMessage());
+        }
+    }
+
+    // Method to read file names from an Excel column (removing spaces)
+    private static Set<String> readExcelFileNames(String filePath, int columnIndex) throws IOException {
+        Set<String> fileNames = new HashSet<>();
+        FileInputStream fis = new FileInputStream(new File(filePath));
+        Workbook workbook = new XSSFWorkbook(fis);
+        Sheet sheet = workbook.getSheetAt(0); // Read the first sheet
+
+        for (Row row : sheet) {
+            Cell cell = row.getCell(columnIndex); // Get the column with file names
+            if (cell != null && cell.getCellType() == CellType.STRING) {
+                String fileName = cell.getStringCellValue().trim(); // Remove leading & trailing spaces
+                if (!fileName.isEmpty()) { // Ignore empty cells
+                    fileNames.add(fileName);
+                }
+            }
+        }
+
+        workbook.close();
+        fis.close();
+        return fileNames;
+    }
+
+    // Method to read file names from a local folder
+    private static Set<String> readLocalFolderFiles(String folderPath) {
+        Set<String> fileNames = new HashSet<>();
+        File folder = new File(folderPath);
+        File[] files = folder.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile()) {
+                    fileNames.add(file.getName().trim()); // Trim spaces from filenames
+                }
+            }
+        }
+        return fileNames;
+    }
+}
+
+--------------
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.wml.P;
