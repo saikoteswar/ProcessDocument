@@ -1,5 +1,60 @@
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.*;
+
+public class ExcelReader {
+    public static void main(String[] args) {
+        String filePath = "mergeFieldsreplacement.xlsx"; // Path to your Excel file
+
+        try (FileInputStream fis = new FileInputStream(new File(filePath));
+             Workbook workbook = new XSSFWorkbook(fis)) {
+
+            Sheet sheet = workbook.getSheetAt(0); // Assuming data is in the first sheet
+            Map<String, List<String>> keyValueMap = new HashMap<>();
+
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) continue; // Skip header row
+
+                Cell keyCell = row.getCell(1); // Column B is the key
+                if (keyCell == null || keyCell.getCellType() == CellType.BLANK) continue;
+
+                String key = keyCell.toString().trim();
+                List<String> values = new ArrayList<>();
+
+                for (int colIndex = 0; colIndex < row.getLastCellNum(); colIndex++) {
+                    if (colIndex == 1) continue; // Skip key column (Column B)
+                    Cell cell = row.getCell(colIndex);
+                    if (cell != null) {
+                        values.add(cell.toString().trim());
+                    }
+                }
+
+                keyValueMap.put(key, values);
+            }
+
+            // Iterate over the HashMap and print key-value pairs in the required format
+            for (Map.Entry<String, List<String>> entry : keyValueMap.entrySet()) {
+                String key = entry.getKey();
+                List<String> values = entry.getValue();
+
+                for (String value : values) {
+                    System.out.println(key + ", " + value);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+-----------------
+	
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
