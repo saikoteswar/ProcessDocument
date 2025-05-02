@@ -1,3 +1,35 @@
+spring:
+  kafka:
+    bootstrap-servers: your-gcp-kafka-broker-1:9093,your-gcp-kafka-broker-2:9093
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    consumer:
+      group-id: your-consumer-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    properties:
+      security.protocol: SSL
+      ssl:
+        # Truststore (CA certificate)
+        truststore:
+          location: classpath:truststore.jks
+          password: ${TRUSTSTORE_PASSWORD}  # Use env variable
+        # Keystore (client certificate + private key)
+        keystore:
+          location: classpath:keystore.jks
+          password: ${KEYSTORE_PASSWORD}    # Use env variable
+        # Private key password (if different from keystore password)
+        key:
+          password: ${KEY_PASSWORD}
+        # Disable hostname verification (for testing only)
+        endpoint:
+          identification:
+            algorithm: ""
+
+
+--------
+
 # Kafka Bootstrap Server
 spring.kafka.bootstrap-servers=your-gcp-kafka-server:9093
 
