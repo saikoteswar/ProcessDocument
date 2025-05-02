@@ -1,4 +1,35 @@
 
+@Configuration
+@EnableKafka
+public class KafkaConsumerConfig {
+
+    @Bean
+    public ConsumerFactory<String, String> consumerFactory() {
+        Map<String, Object> props = new HashMap<>();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "your.kafka.server:9093");
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "your-group-id");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(CommonClientConfigs.SECURITY_PROTOCOL_CONFIG, "SSL");
+        props.put(SslConfigs.SSL_TRUSTSTORE_LOCATION_CONFIG, "src/main/resources/truststore.jks");
+        props.put(SslConfigs.SSL_TRUSTSTORE_PASSWORD_CONFIG, "your-truststore-password");
+        props.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, "src/main/resources/keystore.jks");
+        props.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, "your-keystore-password");
+        props.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, "your-key-password");
+        return new DefaultKafkaConsumerFactory<>(props);
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, String> factory =
+            new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(consumerFactory());
+        return factory;
+    }
+}
+
+-------
+
 spring:
   kafka:
     bootstrap-servers: your-gcp-kafka-server:9093
