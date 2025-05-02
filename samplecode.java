@@ -1,3 +1,24 @@
+
+spring:
+  kafka:
+    bootstrap-servers: your-gcp-kafka-server:9093
+    properties:
+      security.protocol: SSL
+      ssl:
+        truststore:
+          location: classpath:truststore.jks
+          password: truststore-password  # Replace with actual password
+        keystore:
+          location: classpath:keystore.jks
+          password: keystore-password    # Replace with actual password
+        key:
+          password: key-password         # Optional (if different from keystore password)
+        endpoint:
+          identification:
+            algorithm: ""  # Disables hostname verification (use cautiously)
+
+--------___---------
+
 spring:
   kafka:
     bootstrap-servers: your-gcp-kafka-broker-1:9093,your-gcp-kafka-broker-2:9093
