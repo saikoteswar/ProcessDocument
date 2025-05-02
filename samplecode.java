@@ -1,9 +1,52 @@
+# Kafka Bootstrap Server
+spring.kafka.bootstrap-servers=your-gcp-kafka-server:9093
+
+# SSL Configuration
+spring.kafka.properties.security.protocol=SSL
+spring.kafka.properties.ssl.truststore.location=classpath:truststore.jks
+spring.kafka.properties.ssl.truststore.password=truststore-password
+spring.kafka.properties.ssl.keystore.location=classpath:keystore.jks
+spring.kafka.properties.ssl.keystore.password=keystore-password
+spring.kafka.properties.ssl.key.password=key-password  # If different from keystore password
+
+# Disable hostname verification (if needed)
+spring.kafka.properties.ssl.endpoint.identification.algorithm=
+
+
+
+				 @Configuration
+public class KafkaConfig {
+
+    @Value("${spring.kafka.bootstrap-servers}")
+    private String bootstrapServers;
+
+    @Bean
+    public ProducerFactory<String, String> producerFactory() {
+        Map<String, Object> configProps = new HashMap<>();
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        return new DefaultKafkaProducerFactory<>(configProps);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> kafkaTemplate() {
+        return new KafkaTemplate<>(producerFactory());
+    }
+}
+
+----------
+
+	
+
+
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.*;
+import java.util.*
+	;
 
 public class ExcelReader {
     public static void main(String[] args) {
